@@ -4,6 +4,26 @@ import vnode._
 
 // そのままコード書いてあとで書き直す
 
+case class ReorderResult(
+    children: Seq[VirtualTree],
+    moves: Option[MoveResult]
+)
+
+case class MoveResult(
+    removes: Seq[RemoveItem],
+    inserts: Seq[InsertItem]
+)
+
+case class RemoveItem(
+    from: Int,
+    key: String
+)
+
+case class InsertItem(
+    key: String,
+    to: Int
+)
+
 object VTree {
 
   def diff(a: VirtualTree, b: VirtualTree): Seq[Patch] = {
@@ -18,10 +38,10 @@ object VTree {
 
     (a, b) match {
       case (Thunk(_, _), Some(Thunk(_, _))) =>
-      case (Thunk(_, _), _) =>
-      case (_, Some(Thunk(_, _))) =>
+      case (Thunk(_, _), _)                 =>
+      case (_, Some(Thunk(_, _)))           =>
 
-      case (_, None) =>
+      case (_, None)                        =>
 
       case (x: VirtualNode, Some(y: VirtualNode)) =>
         if (x.tagName == y.tagName
@@ -71,8 +91,24 @@ object VTree {
     Seq.empty
   }
 
-  def reorder(aChildren: Seq[VirtualTree], bChildren: Seq[VirtualTree]): Seq[VirtualTree] = {
+  def reorder(aChildren: Seq[VirtualTree], bChildren: Seq[VirtualTree]): ReorderResult = {
 
-    Seq.empty
+    // 全ての子要素にKeyを持っていない場合は全部書き換え
+    if (bChildren.forall(x => x.isInstanceOf[VirtualNode] && x.asInstanceOf[VirtualNode].key.isEmpty)) {
+      return ReorderResult(
+        bChildren,
+        None
+      )
+    }
+
+    // 全ての子要素にKeyを持っていない場合は全部書き換え
+    if (aChildren.forall(x => x.isInstanceOf[VirtualNode] && x.asInstanceOf[VirtualNode].key.isEmpty)) {
+      return ReorderResult(
+        bChildren,
+        None
+      )
+    }
+
+    null
   }
 }
