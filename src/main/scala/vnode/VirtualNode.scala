@@ -11,7 +11,18 @@ case class VirtualNode(
     key: Option[String] = None,
     namespace: Option[String] = None
 ) extends VirtualTree {
-  val count = children.length
+
+  private val virtualNodeChildren = children.filter(_.isInstanceOf[VirtualNode])
+    .map(_.asInstanceOf[VirtualNode])
+
+  // 子要素にWidgetを持っているか確認する
+  val hasWidgets: Boolean = virtualNodeChildren.exists(_.hasWidgets) || children.exists(_.isInstanceOf[Widget])
+
+  // 子要素にThunkを持っているか確認する
+  val hasThunks: Boolean = virtualNodeChildren.exists(_.hasThunks) || children.exists(_.isInstanceOf[Thunk])
+
+  val count: Int = children.length + virtualNodeChildren
+    .map(_.count).sum
 }
 
 case class VirtualText(text: String) extends VirtualTree
