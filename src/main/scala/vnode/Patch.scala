@@ -6,7 +6,6 @@ import vdom.CreateElement
 import vtree.DiffResult
 
 import scala.scalajs.js
-import scala.scalajs.js.JSON
 
 sealed trait Patch
 
@@ -14,11 +13,11 @@ case class PNone(vNode: VirtualTree, patch: VirtualTree) extends Patch
 case class PVText(vNode: VirtualTree, patch: VirtualText) extends Patch
 case class PVNode(vNode: VirtualTree, patch: VirtualNode) extends Patch
 case class PWidget(vNode: VirtualTree, patch: Widget) extends Patch
-case class PProps(vNode: VirtualTree, patch: VirtualTree) extends Patch
+case class PProps(vNode: VirtualTree, patch: Seq[Property]) extends Patch
 case class POrder(vNode: VirtualTree, patch: VirtualTree) extends Patch
 case class PInsert(patch: VirtualTree) extends Patch
 case class PRemove(vNode: VirtualTree) extends Patch
-case class PThunk(vNode: VirtualTree, patch: VirtualTree) extends Patch
+case class PThunk(patch: DiffResult) extends Patch
 
 case class RenderOptions(
     patch: (Node, DiffResult, RenderOptions) => Node,

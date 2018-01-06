@@ -35,5 +35,36 @@ case class Widget(
 
 case class Thunk(
     vnode: VirtualTree,
-    render: VirtualTree => VirtualTree
+    render: Option[VirtualTree] => VirtualTree
 ) extends VirtualTree
+
+case class HandleThunkResult(
+    a: VirtualTree,
+    b: VirtualTree
+)
+object Thunk {
+  def handleThunk(a: VirtualTree, b: VirtualTree): HandleThunkResult = {
+    (a, b) match {
+      case (aa: Thunk, bb: Thunk) =>
+        HandleThunkResult(
+          b = bb.render(Some(a)),
+          a = aa.render(None)
+        )
+      case (aa, bb: Thunk) =>
+        HandleThunkResult(
+          a = aa,
+          b = bb.render(Some(a))
+        )
+      case (aa: Thunk, bb) =>
+        HandleThunkResult(
+          b = bb,
+          a = aa.render(None)
+        )
+      case (aa, bb) =>
+        HandleThunkResult(
+          a = aa,
+          b = bb
+        )
+    }
+  }
+}

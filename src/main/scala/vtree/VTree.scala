@@ -44,22 +44,27 @@ object VTree {
     }
 
     (a, b) match {
-      case (Thunk(_, _), Some(Thunk(_, _))) =>
-        Map.empty // TODO
-      case (Thunk(_, _), _) =>
-        Map.empty // TODO
-      case (_, Some(Thunk(_, _))) =>
-        Map.empty // TODO
+      case (x @ Thunk(_, _), Some(y @ Thunk(_, _))) =>
+        thunks(x, y, index)
+      case (x @ Thunk(_, _), Some(y)) =>
+        thunks(x, y, index)
+      case (x, Some(y @ Thunk(_, _))) =>
+        thunks(x, y, index)
       case (_, None) =>
         Map(index -> Seq(PRemove(a)))
       case (x: VirtualNode, Some(y: VirtualNode)) =>
         if (x.tagName == y.tagName
           && x.namespace == y.namespace
           && x.key == y.key) {
-          // TODO プロパティの変更チェック
-          // TODO diffChildren
 
-          diffChildren(x, y, index)
+          // プロパティの変更チェック
+          // TODO もっと効率的にチェックしたい
+          val propsDiff = if (x.properties != y.properties) {
+            Map(index -> Seq(PProps(a, y.properties)))
+          } else {
+            Map.empty
+          }
+          propsDiff ++ diffChildren(x, y, index)
         } else {
           // VirtualNode同士で変更があった場合
           Map(index -> Seq(PVNode(a, y)))
@@ -67,26 +72,33 @@ object VTree {
       case (_, Some(y: VirtualNode)) =>
         // VirtualNode以外からVirtualNodeに変更された場合
         Map(index -> Seq(PVNode(a, y)))
-
       case (x: VirtualText, Some(y: VirtualText)) if (x.text != y.text) =>
-
         Map(index -> Seq(PVText(a, y)))
-
       case (_, Some(y: VirtualText)) =>
         Map(index -> Seq(PVText(a, y)))
-
       case (x: Widget, Some(y: Widget)) =>
         Map(index -> Seq(PWidget(a, y)))
-
       case (_, Some(y: Widget)) =>
         Map(index -> Seq(PWidget(a, y)))
+      case (_, _) =>
+        Map.empty
     }
 
     // TODO clearState
   }
 
-  def diffChildren(a: VirtualNode, b: VirtualNode, index: Int): Map[Int, Seq[Patch]] = {
+  def thunks(a: VirtualTree, b: VirtualTree, index: Int): Map[Int, Seq[Patch]] = {
+    val nodes = Thunk.handleThunk(a, b)
+    val thunkPatch = diff(nodes.a, nodes.b)
 
+    if (!thunkPatch.patcheMap.isEmpty) {
+      Map(index -> Seq(PThunk(thunkPatch)))
+    } else {
+      Map.empty
+    }
+  }
+
+  def diffChildren(a: VirtualNode, b: VirtualNode, index: Int): Map[Int, Seq[Patch]] = {
     // TODO immutable
     var result: Map[Int, Seq[Patch]] = Map.empty
     var mIndex = index
